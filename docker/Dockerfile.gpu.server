@@ -25,6 +25,10 @@ RUN python -m venv $APP_DIR/.venv && . $APP_DIR/.venv/bin/activate && \
   pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126 && \
   pip install --no-cache-dir .
 
+# 让 `docker exec <容器> python ...` 直接用到 venv 里的解释器和 pip
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
 # 任意 UID 都要能读 /app;marker 会把提取的图片写到当前目录,所以 /app 需要可写(sticky)
 RUN chmod -R a+rX $APP_DIR && chmod 1777 $APP_DIR && \
   mkdir -p /data && chmod 1777 /data
