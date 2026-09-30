@@ -116,7 +116,14 @@ def parse_document(input_file_path, request: gr.Request):
 
 
 os.environ["GRADIO_TEMP_DIR"] = GRADIO_TEMP_DIR
-marker_ui = gr.Blocks(theme=gr.themes.Monochrome(radius_size=gr.themes.sizes.radius_none))
+# 主字体用系统字体栈。Monochrome 默认的 GoogleFont("Lora") 会在页面里注入一个
+# render-blocking 的 fonts.googleapis.com 请求,离线/内网环境会一直等到超时才渲染。
+marker_ui = gr.Blocks(
+    theme=gr.themes.Monochrome(
+        radius_size=gr.themes.sizes.radius_none,
+        font=("ui-sans-serif", "system-ui", "sans-serif"),
+    )
+)
 
 with marker_ui:
     gr.set_static_paths(paths=["assets", GRADIO_TEMP_DIR])
