@@ -1,0 +1,21 @@
+# 用法:
+#   mkdir -p cache
+#   UID=$(id -u) GID=$(id -g) docker compose -f docker-compose.server.cpu.yml up --build
+# (bash 里 UID 是只读变量,需要 export;zsh 里可直接用。也可写进 .env)
+services:
+  marker-api:
+    container_name: marker-api
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cpu.server
+    image: marker-api-cpu
+    # 以宿主机用户运行,bind mount 出来的 ./cache 不需要 chown
+    user: "${UID:-1001}:${GID:-1001}"
+    environment:
+      - HOME=/tmp
+      - HF_HOME=/data/hf
+      - CACHE_DIR=/data/cache
+    volumes:
+      - ./cache:/data
+    ports:
+      - "8080:8080"

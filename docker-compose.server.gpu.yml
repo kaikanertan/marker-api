@@ -1,0 +1,26 @@
+# 用法:
+#   mkdir -p cache
+#   UID=$(id -u) GID=$(id -g) docker compose -f docker-compose.server.gpu.yml up --build
+services:
+  marker-api:
+    container_name: marker-api
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu.server
+    image: marker-api-gpu
+    user: "${UID:-1001}:${GID:-1001}"
+    environment:
+      - HOME=/tmp
+      - HF_HOME=/data/hf
+      - CACHE_DIR=/data/cache
+    volumes:
+      - ./cache:/data
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -76,14 +76,22 @@ Here’s an improved version of the **features section**, along with the **compa
 - **For CPU:**
     ```bash
     docker build -f docker/Dockerfile.cpu.server -t marker-api-cpu .
-    docker run -p 8080:8080 marker-api-cpu
+    mkdir -p cache
+    docker run --user "$(id -u):$(id -g)" -v "$PWD/cache:/data" -p 8080:8080 marker-api-cpu
     ```
 
 - **For GPU:**
     ```bash
     docker build -f docker/Dockerfile.gpu.server -t marker-api-gpu .
-    docker run --gpus all -p 8080:8080 marker-api-gpu
+    mkdir -p cache
+    docker run --gpus all --user "$(id -u):$(id -g)" -v "$PWD/cache:/data" -p 8080:8080 marker-api-gpu
     ```
+
+  Compose 示例见 `docker-compose.server.cpu.yml` / `docker-compose.server.gpu.yml`。
+
+- **Conversion cache:** `/convert` 的结果按「文件内容 sha256 + `max_pages` + `start_page` + `langs`」缓存为 JSON,
+  位于 `$CACHE_DIR`(默认 `/data/cache`)。文件名和 `batch_multiplier` 不影响命中。
+  镜像不绑定用户,用 `--user` 指定运行 UID,并把可写目录挂到 `/data`(模型缓存 `HF_HOME` 也在其中)。
 
 ---
 
