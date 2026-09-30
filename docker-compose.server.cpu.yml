@@ -1,7 +1,9 @@
 # 用法:
 #   mkdir -p cache
-#   UID=$(id -u) GID=$(id -g) docker compose -f docker-compose.server.cpu.yml up --build
-# (bash 里 UID 是只读变量,需要 export;zsh 里可直接用。也可写进 .env)
+#   echo "UID=$(id -u)" >> .env && echo "GID=$(id -g)" >> .env
+#   docker compose -f docker-compose.server.cpu.yml up --build
+# UID/GID 走 .env(compose 会自动读取)。注意:bash 里 UID 是只读变量,
+# `UID=$(id -u) docker compose ...` 这种写法会报 "UID: readonly variable"。
 services:
   marker-api:
     container_name: marker-api

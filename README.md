@@ -88,6 +88,12 @@ Here’s an improved version of the **features section**, along with the **compa
     ```
 
   Compose 示例见 `docker-compose.server.cpu.yml` / `docker-compose.server.gpu.yml`。
+  使用前先把 UID/GID 写进 `.env`(compose 会自动读取):
+  ```bash
+  mkdir -p cache
+  echo "UID=$(id -u)" >> .env && echo "GID=$(id -g)" >> .env
+  docker compose -f docker-compose.server.cpu.yml up --build
+  ```
 
 - **Conversion cache:** `/convert` 的结果按「文件内容 sha256 + `max_pages` + `start_page` + `langs`」缓存为 JSON,
   位于 `$CACHE_DIR`(默认 `/data/cache`)。文件名和 `batch_multiplier` 不影响命中。
