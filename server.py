@@ -22,8 +22,7 @@ from marker_api.model.schema import (
 )
 from marker_api.demo import marker_ui
 from typing import Union
-from pathlib import Path
-import pickle
+from marker_api import cache as conversion_cache
 
 
 # Initialize logging
@@ -75,23 +74,22 @@ async def convert_pdf_to_markdown(pdf_file: UploadFile, max_pages: Union[int, No
     Endpoint to convert a single PDF to markdown.
     """
     logger.info(f"Received file: {pdf_file.filename}")
-    cache_dir = Path("/data/cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    pkl_path = cache_dir / f"{Path(pdf_file.filename).name}-{max_pages}-{start_page}.pkl"
-    if pkl_path.exists():
-        logger.info(f"Loading cached file: {pkl_path}")
-        with open(pkl_path, "rb") as f:
-            response = pickle.load(f)
-        return ConversionResponse(status="Success", result=response)
-    else:
-        file = await pdf_file.read()
-        response = process_pdf_file(file, pdf_file.filename, model_list,
-                                    max_pages=max_pages, start_page=start_page,
-                                    langs=langs, batch_multiplier=batch_multiplier)
-        with open(pkl_path, "wb") as f:
-            pickle.dump(response, f)
-        logger.debug(f"Saved cached file: {pkl_path}")
-        return ConversionResponse(status="Success", result=response)
+    file = await pdf_file.read()
+    key = conversion_cache.make_cache_key(file, max_pages, start_page, langs)
+
+    cached = conversion_cache.load(key)
+    if cached is not None:
+        logger.info(f"Cache hit: {key}")
+        # 返回本次请求的 Upload Name,而不是首次转换时的名字
+        cached["filename"] = pdf_file.filename
+        return ConversionResponse(status="Success", result=cached)
+
+    response = process_pdf_file(file, pdf_file.filename, model_list,
+                                max_pages=max_pages, start_page=start_page,
+                                langs=langs, batch_multiplier=batch_multiplier)
+    if conversion_cache.save(key, response):
+        logger.debug(f"Saved cache: {key}")
+    return ConversionResponse(status="Success", result=response)
 
 
 # Endpoint to convert multiple PDFs to markdown
