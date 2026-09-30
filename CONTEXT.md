@@ -17,7 +17,7 @@ _Avoid_: Response, output
 _Avoid_: Settings, params
 
 **Performance Hint**:
-只影响转换速度和显存占用、不影响 **Conversion Result** 内容的参数(`batch_multiplier`)。它不属于 **Conversion Options**。
+影响转换速度、显存占用或数值精度的参数,例如 `batch_multiplier` 和推理设备(CPU / GPU)。它可能带来可忽略的浮点差异,但不产生一个新的 **Conversion Result**,因而不属于 **Conversion Options**。
 _Avoid_: Option
 
 **Upload Name**:
