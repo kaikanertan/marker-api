@@ -98,6 +98,18 @@ Here’s an improved version of the **features section**, along with the **compa
   docker compose -f docker-compose.server.cpu.yml up --build
   ```
 
+- **构建加速(镜像源):** 默认即走国内镜像,无需额外参数:
+  - torch 源: `https://mirror.sjtu.edu.cn/pytorch-wheels/{cpu|cu126}`(SJTU 镜像 download.pytorch.org)
+  - PyPI 源: `https://mirrors.aliyun.com/pypi/simple`
+
+  如需回到官方源,构建时覆盖:
+  ```bash
+  docker build -f docker/Dockerfile.cpu.server -t marker-api-cpu \
+    --build-arg TORCH_INDEX=https://download.pytorch.org/whl/cpu \
+    --build-arg UV_INDEX=https://pypi.org/simple .
+  ```
+  注意:换 build-arg 值会作废对应层的缓存。
+
 - **Conversion cache:** `/convert` 的结果按「文件内容 sha256 + `max_pages` + `start_page` + `langs`」缓存为 JSON,
   位于 `$CACHE_DIR`(默认 `/data/cache`)。文件名和 `batch_multiplier` 不影响命中。
   镜像不绑定用户,用 `--user` 指定运行 UID,并把可写目录挂到 `/data`(模型缓存 `HF_HOME` 也在其中)。
