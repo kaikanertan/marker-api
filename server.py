@@ -1,18 +1,20 @@
 import os
 import asyncio
 import argparse
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from typing import List
 import concurrent.futures
+import logging
+from contextlib import asynccontextmanager
+from typing import List
+
+from fastapi import FastAPI, Request, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from marker.logger import configure_logging  # Import logging configuration
 from marker.models import load_all_models  # Import function to load models
 from marker_api.routes import (
     process_pdf_file,
 )
 from marker_api.utils import print_markerapi_text_art
-from contextlib import asynccontextmanager
-import logging
 import gradio as gr
 from marker_api.model.schema import (
     BatchConversionResponse,
@@ -54,6 +56,17 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+
+# 转换失败时返回 JSON(而不是 uvicorn 默认的纯文本 "Internal Server Error"),
+# 否则调用方(如 marker-ui) response.json() 会抛出难以定位的 JSONDecodeError。
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error on {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"status": "Error", "error": f"{type(exc).__name__}: {exc}"},
+    )
 
 
 
