@@ -10,6 +10,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
+    # Triton 首次启动 CUDA kernel 时需要在运行时编译一个 C 辅助模块
+    # (triton/backends/nvidia/driver.py -> CudaUtils()), 没有 gcc 会报
+    # "RuntimeError: Failed to find C compiler"。slim 镜像不带编译器,必须显式装。
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # uv 用官方镜像里的静态二进制,不用装
@@ -63,7 +67,9 @@ RUN chmod 1777 $APP_DIR && \
 # (ENV 放在所有 RUN 之后,改动它不会作废上面的重层。)
 ENV HOME=/tmp \
     HF_HOME=/data/hf \
-    CACHE_DIR=/data/cache
+    CACHE_DIR=/data/cache \
+    # Triton 的 kernel JIT 缓存落在 /data(宿主机挂载),容器重启后不必重新编译
+    TRITON_CACHE_DIR=/data/cache/triton
 
 # 让 `docker exec <容器> python/pip/uv ...` 直接用 venv 里的工具
 ENV VIRTUAL_ENV=/app/.venv
