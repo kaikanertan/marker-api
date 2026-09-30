@@ -81,6 +81,9 @@ Here’s an improved version of the **features section**, along with the **compa
     ```
 
 - **For GPU:**
+    需要宿主机有 NVIDIA 驱动(>= 525)和 nvidia-container-toolkit。纯推理不需要 CUDA toolkit,
+    镜像与 CPU 版共用 `python:3.12-slim`,只是 torch 走 `cu126` index。
+    若目标机器驱动较老(< 525),把 `docker/Dockerfile.gpu.server` 里的 `cu126` 换成 `cu118`。
     ```bash
     docker build -f docker/Dockerfile.gpu.server -t marker-api-gpu .
     mkdir -p cache
