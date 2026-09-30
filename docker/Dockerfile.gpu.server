@@ -33,26 +33,24 @@ RUN apt-get install -y --no-install-recommends python3.12-venv
 # && rm -rf /var/lib/apt/lists/*
 
 
-ARG UID=11132
-ARG GID=11133
-
-ENV HOME=/home/llm-apps
-RUN addgroup --gid $GID llm-adm && adduser --uid $UID --ingroup llm-adm --disabled-password -q --gecos llm llm-apps
+# 镜像不绑定任何用户:运行时用 `--user UID:GID` (或 compose 的 `user:`) 指定。
+# HOME 指向 /tmp,HF_HOME / CACHE_DIR 指向 /data,由宿主机挂载的目录承载。
+ENV HOME=/tmp \
+    HF_HOME=/data/hf \
+    CACHE_DIR=/data/cache
 
 ARG APP_DIR=/app
 WORKDIR $APP_DIR
 COPY ./ ./
-RUN mkdir /data
-RUN chown -R $UID:$GID $APP_DIR /data
-USER $UID:$GID
 RUN python3.12 -m venv $APP_DIR/.venv && . $APP_DIR/.venv/bin/activate && \
   pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
   pip install --no-cache-dir .
 
-# Copy the project files into the Docker image
+# 任意 UID 都要能读 /app;marker 会把提取的图片写到当前目录,所以 /app 需要可写(sticky)
+RUN chmod -R a+rX $APP_DIR && chmod 1777 $APP_DIR && \
+  mkdir -p /data && chmod 1777 /data
 
-#RUN python -c 'from marker.models import load_all_models; load_all_models()'
-
+VOLUME /data
 EXPOSE 8080
 
 CMD ["/app/run.sh"]
